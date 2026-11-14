@@ -1,22 +1,31 @@
-import { addUser, findUserById, listAllUsers } from "../models/user-model.js";
 import bcrypt from "bcrypt";
+import { addUser, findUserById, listAllUsers } from "../models/user-model.js";
 
-const getUser = (req, res) => {
-  res.json(listAllUsers());
-};
-
-const getUserById = (req, res) => {
-  const user = findUserById(req.params.id);
-  if (user) {
-    res.json(user);
-  } else {
-    res.sendStatus(404);
+const getUsers = async (req, res, next) => {
+  try {
+    const users = await listAllUsers();
+    res.json(users);
+  } catch (error) {
+    next(error);
   }
 };
 
-const postUser = async (req, res) => {
+const getUserById = async (req, res, next) => {
   try {
-    // Hash the password with a salt rounds value of 10
+    const user = await findUserById(req.params.id);
+    if (!user) {
+      const error = new Error("User not found");
+      error.status = 404;
+      return next(error);
+    }
+    res.json(user);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const postUser = async (req, res, next) => {
+  try {
     const salt = bcrypt.genSaltSync(10);
     const hashedPassword = bcrypt.hashSync(req.body.password, salt);
 
@@ -26,22 +35,18 @@ const postUser = async (req, res) => {
     };
 
     const result = await addUser(userData);
-    if (result.user_id) {
-      res.status(201).json({ message: "New user added.", result });
-    } else {
-      res.sendStatus(400);
+    if (!result || result.error) {
+      const error = new Error("Failed to create user");
+      error.status = 400;
+      return next(error);
     }
+
+    res.status(201).json({ message: "New user added.", result });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 };
 
-const putUser = (req, res) => {
-  res.status(200).json({ message: "User item updated." });
-};
+// Repeat for putUser and deleteUser if implemented...
 
-const deleteUser = (req, res) => {
-  res.status(200).json({ message: "User item deleted." });
-};
-
-export { getUser, getUserById, postUser, putUser, deleteUser };
+export { getUsers, getUserById, postUser };

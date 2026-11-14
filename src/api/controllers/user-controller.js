@@ -1,4 +1,5 @@
 import { addUser, findUserById, listAllUsers } from "../models/user-model.js";
+import bcrypt from "bcrypt";
 
 const getUser = (req, res) => {
   res.json(listAllUsers());
@@ -13,12 +14,25 @@ const getUserById = (req, res) => {
   }
 };
 
-const postUser = (req, res) => {
-  const result = addUser(req.body);
-  if (result.user_id) {
-    res.status(201).json({ message: "New user added.", result });
-  } else {
-    res.sendStatus(400);
+const postUser = async (req, res) => {
+  try {
+    // Hash the password with a salt rounds value of 10
+    const salt = bcrypt.genSaltSync(10);
+    const hashedPassword = bcrypt.hashSync(req.body.password, salt);
+
+    const userData = {
+      ...req.body,
+      password: hashedPassword,
+    };
+
+    const result = await addUser(userData);
+    if (result.user_id) {
+      res.status(201).json({ message: "New user added.", result });
+    } else {
+      res.sendStatus(400);
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
 

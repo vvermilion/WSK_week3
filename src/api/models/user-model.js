@@ -35,4 +35,22 @@ const addUser = (user) => {
   return { user_id: newId };
 };
 
-export { listAllUsers, findUserById, addUser };
+const findUserByUsername = async (username) => {
+  const [rows] = await promisePool.execute(
+    "SELECT * FROM wsk_users WHERE username = ?",
+    [username],
+  );
+  if (rows.length === 0) {
+    return false;
+  }
+  return rows[0];
+};
+
+export {
+  listAllUsers,
+  findUserById,
+  findUserByUsername,
+  addUser,
+  modifyUser,
+  removeUser,
+};

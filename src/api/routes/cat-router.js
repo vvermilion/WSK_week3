@@ -1,5 +1,6 @@
 import express from "express";
 import multer from "multer";
+import { createThumbnail } from "../../middlewares/upload.js"; // Adjust path if needed
 import {
   getCat,
   getCatById,
@@ -11,7 +12,10 @@ import {
 const upload = multer({ dest: "uploads/" });
 const catRouter = express.Router();
 
-catRouter.route("/").get(getCat).post(upload.single("cat"), postCat); // Multer middleware saves file to req.file
+catRouter
+  .route("/")
+  .get(getCat)
+  .post(upload.single("cat"), createThumbnail, postCat);
 
 catRouter.route("/:id").get(getCatById).put(putCat).delete(deleteCat);
 
